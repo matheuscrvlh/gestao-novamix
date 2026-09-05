@@ -6,12 +6,12 @@ import EvolucaoChart from '../components/EvolucaoChart'
 import Spinner from '../components/Spinner'
 import { useMe } from '../hooks/useMe'
 import { useApiResource } from '../hooks/useApiResource'
-import { nomeFilial } from '../constants/filiais'
+import { nomeFilial, comFiltroEcommerce } from '../constants/filiais'
 import { formatCurrency, formatNumber, formatPercent } from '../lib/format'
 import { formatMes, getUltimoMesFechado } from '../lib/date'
 import type { EvolucaoMensalResponse, EvolucaoRedeRow, TopProdutosResponse } from '../types/gestao'
 
-type RankMetric = 'FATURAMENTO' | 'LUCRO' | 'MARGEM'
+type RankMetric = 'FATURAMENTO' | 'LUCRO' | 'MARGEM' | 'N_CUPONS' | 'TICKET_MEDIO'
 type ProdMetric = 'FATURAMENTO' | 'QUANTIDADE' | 'MARGEM' | 'NRO_CUPONS'
 
 const PROD_PAGE_SIZE = 10
@@ -27,7 +27,7 @@ export default function Home() {
     const [prodVerTodos, setProdVerTodos] = useState(false)
     const [mesProdutos, setMesProdutos] = useState<string | null>(null)
 
-    const evolucao = useApiResource<EvolucaoMensalResponse>('/gestao/evolucao-mensal', { meses: '12' }, habilitado)
+    const evolucao = useApiResource<EvolucaoMensalResponse>('/gestao/evolucao-mensal', { meses: '24' }, habilitado)
 
     const rede = evolucao.data?.rede ?? []
     const porLoja = evolucao.data?.porLoja ?? []
@@ -48,13 +48,15 @@ export default function Home() {
         habilitado
     )
 
-    const branchesDisponiveis = me?.branches ?? []
+    const branchesDisponiveis = useMemo(() => comFiltroEcommerce(me?.branches ?? []), [me])
     const lojaAtiva = lojaSelecionada ?? branchesDisponiveis[0] ?? null
 
     const rankingLojas = useMemo(() => {
-        const linhas = porLoja
-            .filter((r) => r.MES === ultimoMes)
-            .map((r) => ({ ...r, MARGEM: r.FATURAMENTO !== 0 ? r.LUCRO / r.FATURAMENTO : 0 }))
+        const linhas = porLoja.filter((r) => r.MES === ultimoMes).map((r) => ({
+            ...r,
+            MARGEM: r.FATURAMENTO !== 0 ? r.LUCRO / r.FATURAMENTO : 0,
+            TICKET_MEDIO: r.N_CUPONS > 0 ? r.FATURAMENTO / r.N_CUPONS : 0,
+        }))
         return linhas.slice().sort((a, b) => b[rankMetric] - a[rankMetric])
     }, [porLoja, ultimoMes, rankMetric])
 
@@ -66,7 +68,9 @@ export default function Home() {
                 MES: r.MES,
                 FATURAMENTO: r.FATURAMENTO,
                 LUCRO: r.LUCRO,
+                N_CUPONS: r.N_CUPONS,
                 MARGEM: r.FATURAMENTO !== 0 ? r.LUCRO / r.FATURAMENTO : 0,
+                TICKET_MEDIO: r.N_CUPONS > 0 ? r.FATURAMENTO / r.N_CUPONS : 0,
             }))
     }, [porLoja, lojaAtiva])
 
@@ -118,53 +122,64 @@ export default function Home() {
                     </p>
 
                     {/* KPI strip */}
-                    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 mb-8'>
-                        <div className={cardClass}>
-                            <span className='text-xs font-semibold uppercase tracking-wide text-gray-dark dark:text-dark-text-muted'>
-                                Faturamento {ultimoMes ? `· ${formatMes(ultimoMes)}` : ''}
-                            </span>
-                            <div className='mt-2 text-2xl font-semibold text-gray-text dark:text-dark-text'>
-                                {evolucao.loading ? (
-                                    <Spinner className='h-5 w-5' />
-                                ) : cur ? (
-                                    formatCurrency(cur.FATURAMENTO)
-                                ) : (
-                                    '—'
+                    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8'>
+                        {(
+                            [
+                                {
+                                    label: 'Venda',
+                                    valor: cur ? formatCurrency(cur.FATURAMENTO) : '—',
+                                    up: cur && prev ? cur.FATURAMENTO >= prev.FATURAMENTO : null,
+                                    delta:
+                                        cur && prev && prev.FATURAMENTO !== 0
+                                            ? formatPercent(Math.abs(cur.FATURAMENTO / prev.FATURAMENTO - 1))
+                                            : null,
+                                },
+                                {
+                                    label: 'Nº de cupons',
+                                    valor: cur ? formatNumber(cur.N_CUPONS) : '—',
+                                    up: cur && prev ? cur.N_CUPONS >= prev.N_CUPONS : null,
+                                    delta:
+                                        cur && prev && prev.N_CUPONS !== 0
+                                            ? formatPercent(Math.abs(cur.N_CUPONS / prev.N_CUPONS - 1))
+                                            : null,
+                                },
+                                {
+                                    label: 'Margem',
+                                    valor: cur ? formatPercent(cur.MARGEM) : '—',
+                                    up: cur && prev ? cur.MARGEM >= prev.MARGEM : null,
+                                    delta: cur && prev ? `${Math.abs((cur.MARGEM - prev.MARGEM) * 100).toFixed(1)}pp` : null,
+                                },
+                                {
+                                    label: 'Ticket médio',
+                                    valor: cur ? formatCurrency(cur.TICKET_MEDIO) : '—',
+                                    up: cur && prev ? cur.TICKET_MEDIO >= prev.TICKET_MEDIO : null,
+                                    delta:
+                                        cur && prev && prev.TICKET_MEDIO !== 0
+                                            ? formatPercent(Math.abs(cur.TICKET_MEDIO / prev.TICKET_MEDIO - 1))
+                                            : null,
+                                },
+                            ] as const
+                        ).map((kpi) => (
+                            <div key={kpi.label} className={cardClass}>
+                                <span className='text-xs font-semibold uppercase tracking-wide text-gray-dark dark:text-dark-text-muted'>
+                                    {kpi.label} {ultimoMes ? `· ${formatMes(ultimoMes)}` : ''}
+                                </span>
+                                <div className='mt-2 text-2xl font-semibold text-gray-text dark:text-dark-text'>
+                                    {evolucao.loading ? <Spinner className='h-5 w-5' /> : kpi.valor}
+                                </div>
+                                {kpi.delta && penultimoMes && (
+                                    <div className='mt-1 text-xs text-gray-dark dark:text-dark-text-muted'>
+                                        {kpi.up ? '▲' : '▼'} {kpi.delta} vs {formatMes(penultimoMes)}
+                                    </div>
                                 )}
                             </div>
-                            {cur && prev && (
-                                <div className='mt-1 text-xs text-gray-dark dark:text-dark-text-muted'>
-                                    {cur.FATURAMENTO >= prev.FATURAMENTO ? '▲' : '▼'}{' '}
-                                    {formatPercent(Math.abs(cur.FATURAMENTO / prev.FATURAMENTO - 1))} vs {formatMes(penultimoMes!)}
-                                </div>
-                            )}
-                        </div>
-                        <div className={cardClass}>
-                            <span className='text-xs font-semibold uppercase tracking-wide text-gray-dark dark:text-dark-text-muted'>
-                                Margem {ultimoMes ? `· ${formatMes(ultimoMes)}` : ''}
-                            </span>
-                            <div className='mt-2 text-2xl font-semibold text-gray-text dark:text-dark-text'>
-                                {evolucao.loading ? (
-                                    <Spinner className='h-5 w-5' />
-                                ) : cur ? (
-                                    formatPercent(cur.MARGEM)
-                                ) : (
-                                    '—'
-                                )}
-                            </div>
-                            {cur && prev && (
-                                <div className='mt-1 text-xs text-gray-dark dark:text-dark-text-muted'>
-                                    {cur.MARGEM >= prev.MARGEM ? '▲' : '▼'}{' '}
-                                    {Math.abs((cur.MARGEM - prev.MARGEM) * 100).toFixed(1)}pp vs {formatMes(penultimoMes!)}
-                                </div>
-                            )}
-                        </div>
+                        ))}
                     </div>
 
                     {/* Evolução da rede */}
                     <h2 className='text-lg font-semibold text-gray-text dark:text-dark-text mb-1'>Evolução da rede</h2>
                     <p className='text-sm text-gray-dark dark:text-dark-text-muted mb-4'>
-                        Faturamento e margem mensal, últimos 12 meses.
+                        Faturamento e margem mensal, últimos 2 anos.
                     </p>
                     <div className={`${cardClass} mb-8`} style={{ height: 320 }}>
                         {evolucao.erro ? (
@@ -194,6 +209,8 @@ export default function Home() {
                             <option value='FATURAMENTO'>Faturamento</option>
                             <option value='LUCRO'>Lucro</option>
                             <option value='MARGEM'>Margem %</option>
+                            <option value='N_CUPONS'>Nº de cupons</option>
+                            <option value='TICKET_MEDIO'>Ticket médio</option>
                         </select>
                     </div>
                     <DataTable
@@ -202,6 +219,8 @@ export default function Home() {
                             { key: 'fat', label: 'Faturamento', align: 'right', render: (r) => formatCurrency(r.FATURAMENTO) },
                             { key: 'lucro', label: 'Lucro', align: 'right', render: (r) => formatCurrency(r.LUCRO) },
                             { key: 'margem', label: 'Margem', align: 'right', render: (r) => formatPercent(r.MARGEM) },
+                            { key: 'cupons', label: 'Nº cupons', align: 'right', render: (r) => formatNumber(r.N_CUPONS) },
+                            { key: 'ticket', label: 'Ticket médio', align: 'right', render: (r) => formatCurrency(r.TICKET_MEDIO) },
                         ]}
                         rows={rankingLojas}
                         loading={evolucao.loading}

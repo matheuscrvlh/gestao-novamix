@@ -34,3 +34,20 @@ export function resolveFiliaisSelecionadas(req: FastifyRequest, filiaisLiberadas
 
     return selecionadas.length > 0 ? selecionadas : filiaisLiberadas
 }
+
+export const FILIAL_ECOMMERCE = 99
+export const FILIAL_ORIGEM_ECOMMERCE = 1
+
+/**
+ * Vendas do vendedor Tray (e-commerce) ficam fisicamente no estoque do Prado
+ * (IDEMPRESA=1), mas as queries de venda/lucro/cupom remapeiam essas linhas pra
+ * IDEMPRESA=99 (ver IDVENDEDOR IN (...) nas queries). Quem tem acesso ao Prado
+ * também enxerga essas linhas no resultado, então liberamos a exibição de
+ * e-commerce automaticamente pra quem tem acesso à filial 1.
+ */
+export function comFiltroEcommerce(filiais: number[]): number[] {
+    if (filiais.includes(FILIAL_ORIGEM_ECOMMERCE) && !filiais.includes(FILIAL_ECOMMERCE)) {
+        return [...filiais, FILIAL_ECOMMERCE]
+    }
+    return filiais
+}

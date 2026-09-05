@@ -3,7 +3,7 @@ services:
     build: ./server
     container_name: gestao-server
     ports:
-      - "3005:3000"
+      - "3011:3000"
     env_file:
       - ./server/.env
     environment:
@@ -17,5 +17,5 @@ services:
         VITE_API_URL: ${VITE_API_URL:?Defina a variável VITE_API_URL antes de buildar}
     container_name: gestao-client
     ports:
-      - "8085:80"
+      - "8091:80"
     restart: unless-stopped

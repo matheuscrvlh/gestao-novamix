@@ -16,8 +16,7 @@ const linkInactiveClass =
 
 const PAGINAS: { to: string; label: string }[] = [
     { to: '/metas', label: 'Metas' },
-    { to: '/estoque', label: 'Estoque' },
-    { to: '/validade', label: 'Validade' },
+    { to: '/estoque', label: 'Estoque e produtos' },
     { to: '/promocoes', label: 'Promoções' },
 ]
 

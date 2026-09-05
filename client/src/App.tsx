@@ -1,8 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
 import Metas from './pages/Metas'
-import Estoque from './pages/Estoque'
-import Validade from './pages/Validade'
+import EstoqueProdutos from './pages/EstoqueProdutos'
 import Promocoes from './pages/Promocoes'
 
 export default function App() {
@@ -11,8 +10,7 @@ export default function App() {
       <Routes>
         <Route path='/' element={<Home />}/>
         <Route path='/metas' element={<Metas />}/>
-        <Route path='/estoque' element={<Estoque />}/>
-        <Route path='/validade' element={<Validade />}/>
+        <Route path='/estoque' element={<EstoqueProdutos />}/>
         <Route path='/promocoes' element={<Promocoes />}/>
       </Routes>
     </>

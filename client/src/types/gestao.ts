@@ -14,13 +14,16 @@ export interface EvolucaoLojaRow {
     MES: string
     FATURAMENTO: number
     LUCRO: number
+    N_CUPONS: number
 }
 
 export interface EvolucaoRedeRow {
     MES: string
     FATURAMENTO: number
     LUCRO: number
+    N_CUPONS: number
     MARGEM: number
+    TICKET_MEDIO: number
 }
 
 export interface EvolucaoMensalResponse {
@@ -116,4 +119,74 @@ export interface MetasResponse {
     mesano: string
     porLoja: MetaLojaResolvida[]
     bruto?: MetaLojaBruta[]
+}
+
+export interface ProdutoBuscaRow {
+    IDSUBPRODUTO: number
+    DESCRICAOPRODUTO: string
+    IDCODBARPROD: number
+    DESCRSECAO: string | null
+}
+
+export interface ProdutoCadastro {
+    IDSUBPRODUTO: number
+    DESCRICAOPRODUTO: string
+    FABRICANTE: string | null
+    IDCODBARPROD: number
+    EMBALAGEMSAIDA: string | null
+    PESOLIQUIDO: number | null
+    DESCRDIVISAO: string | null
+    DESCRSECAO: string | null
+    DESCRGRUPO: string | null
+    DESCRSUBGRUPO: string | null
+}
+
+export interface ProdutoEstoquePrecoRow {
+    IDEMPRESA: number
+    QTDATUALESTOQUE: number | null
+    VALATUALESTOQUE: number | null
+    VALPRECOVENDA: number | null
+    DTULTIMAVENDA: string | null
+}
+
+export interface ProdutoVendaRecenteRow {
+    IDEMPRESA: number
+    VENDA: number
+    LUCRO: number
+    QTD_VENDIDA: number
+}
+
+export interface ProdutoDetalheResponse {
+    cadastro: ProdutoCadastro
+    estoquePreco: ProdutoEstoquePrecoRow[]
+    vendaRecente: ProdutoVendaRecenteRow[]
+}
+
+export interface PromocaoProdutoDesempenho {
+    IDSUBPRODUTO: number
+    DESCRICAOPRODUTO: string
+    IDCODBARPROD: number
+    VALPRECO: number
+    VALDESCONTO: number
+    PERDESCONTO: number
+    VENDA: number
+    LUCRO: number
+    QTD_VENDIDA: number
+    VENDA_MEDIA_DIARIA_ANTES: number
+    QTD_MEDIA_DIARIA_ANTES: number
+}
+
+export interface PromocaoDetalheResponse {
+    IDPROMOCAO: number
+    DESCRPROMOCAO: string
+    DTINIPROMOCAO: string
+    DTFIMPROMOCAO: string
+    lojas: number[]
+    produtos: PromocaoProdutoDesempenho[]
+    analitico: {
+        mediaDiariaDurante: number | null
+        mediaDiariaAntes: number | null
+        liftVendaPct: number | null
+        diasComparados: number
+    }
 }
