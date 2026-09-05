@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body {
+    overflow-x: hidden;
+}
+
+button:not(:disabled),
+[role='button'] {
+    cursor: pointer;
+}
+
+@theme {
+    --color-*: initial;
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --color-gray: #F5F5F5;
+    --color-gray-dark: #354856;
+    --color-gray-base: #1E8581;
+    --color-gray-text: #33363F;
+    --color-orange-light: #FF8D0A;
+    --color-orange-base: #EA8006;
+    --color-orange-banner: #FE8100;
+    --color-blue-base: #243785;
+    --color-yellow-base: #FFE700;
+    --color-red-light: #F72B2A;
+    --color-red-base: #DF0406;
+    --color-green-base: #7BAD7F;
+    --color-gold: #E6A800;
+    --color-silver: #5C8AD1;
+    --color-bronze: #E8621C;
+
+    --color-dark-bg: #0E141B;
+    --color-dark-surface: #1A2330;
+    --color-dark-surface-2: #232F3F;
+    --color-dark-border: #2E3B4D;
+    --color-dark-text: #E7EAEE;
+    --color-dark-text-muted: #93A2B4;
+
+    --animate-trophy-wiggle: trophy-wiggle 4s ease-in-out infinite;
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+@keyframes trophy-wiggle {
+    0%,
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+    2% {
+        transform: rotate(-16deg) scale(1.15);
+    }
+    4% {
+        transform: rotate(13deg) scale(1.15);
+    }
+    6% {
+        transform: rotate(-8deg) scale(1.05);
+    }
+    8% {
+        transform: rotate(5deg) scale(1.05);
+    }
+    10% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+@page {
+    size: A4;
+    margin: 0;
+}
+
+@media print {
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    #qr-print-area,
+    #qr-print-area * {
+        visibility: visible;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    #qr-print-area {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

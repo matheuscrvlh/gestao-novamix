@@ -1,0 +1,21 @@
+services:
+  server:
+    build: ./server
+    container_name: gestao-server
+    ports:
+      - "3005:3000"
+    env_file:
+      - ./server/.env
+    environment:
+      SERVER_PORT: "3000"
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: ${VITE_API_URL:?Defina a variável VITE_API_URL antes de buildar}
+    container_name: gestao-client
+    ports:
+      - "8085:80"
+    restart: unless-stopped
